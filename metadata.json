@@ -1,0 +1,5 @@
+{
+  "name": "Copy of Class Group Assign-o-Matic",
+  "description": "A streamlined group generator for students to self-assign into Groups 2-5 with a 5-member limit per group. Includes admin tools for exports and resets.",
+  "requestFramePermissions": []
+}
