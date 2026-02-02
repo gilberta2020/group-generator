@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { UserPlus, Settings, Users, ClipboardList, LogOut, Trash2, Download, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Student, TARGET_GROUPS, GROUP_MAX_SIZE, ADMIN_PASSCODE } from './types';
+import React, { useState, useEffect } from 'react';
+import { UserPlus, Settings, Users, ClipboardList, LogOut, Trash2, Download, AlertCircle, CheckCircle2, ExternalLink, X } from 'lucide-react';
+import { Student, TARGET_GROUPS, GROUP_MAX_SIZE, ADMIN_PASSCODE, WHATSAPP_LINKS } from './types';
 
 // Helper Components
 const Toast: React.FC<{ message: string; type: 'success' | 'error' | 'info'; onClose: () => void }> = ({ message, type, onClose }) => {
@@ -15,7 +15,7 @@ const Toast: React.FC<{ message: string; type: 'success' | 'error' | 'info'; onC
   return (
     <div className={`fixed bottom-4 left-1/2 -translate-x-1/2 ${bgColor} text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 z-50 animate-bounce`}>
       {type === 'success' ? <CheckCircle2 size={18} /> : type === 'error' ? <AlertCircle size={18} /> : <Users size={18} />}
-      <span className="font-medium">{message}</span>
+      <span className="font-medium text-sm sm:text-base">{message}</span>
     </div>
   );
 };
@@ -29,37 +29,89 @@ const GroupCard: React.FC<{
   const isFull = members.length >= GROUP_MAX_SIZE;
   
   return (
-    <div className={`bg-white rounded-xl shadow-sm border ${isFull ? 'border-indigo-100' : 'border-gray-100'} overflow-hidden transition-all hover:shadow-md`}>
-      <div className={`p-4 ${isFull ? 'bg-indigo-50' : 'bg-gray-50'} flex justify-between items-center border-b`}>
+    <div className={`bg-white rounded-xl shadow-sm border ${isFull ? 'border-orange-100' : 'border-gray-100'} overflow-hidden transition-all hover:shadow-md h-full flex flex-col`}>
+      <div className={`p-4 ${isFull ? 'bg-orange-50' : 'bg-gray-50'} flex justify-between items-center border-b`}>
         <h3 className="font-bold text-gray-800 text-lg">Group {groupId}</h3>
-        <span className={`text-sm font-semibold px-2 py-1 rounded ${isFull ? 'bg-indigo-200 text-indigo-800' : 'bg-gray-200 text-gray-600'}`}>
+        <span className={`text-xs font-bold px-2 py-1 rounded ${isFull ? 'bg-orange-200 text-orange-800' : 'bg-gray-200 text-gray-600'}`}>
           {members.length} / {GROUP_MAX_SIZE}
         </span>
       </div>
-      <div className="p-4 min-h-[150px]">
+      <div className="p-4 flex-grow">
         {members.length === 0 ? (
-          <p className="text-gray-400 italic text-sm text-center py-8">No members yet</p>
+          <p className="text-gray-400 italic text-xs text-center py-8">Waiting for students...</p>
         ) : (
-          <ul className="space-y-2">
+          <ul className="space-y-1.5">
             {members.sort((a, b) => a.assignedAt - b.assignedAt).map((m) => (
               <li key={m.id} className="flex justify-between items-center bg-gray-50 p-2 rounded border border-gray-100 group">
-                <div className="flex flex-col">
-                  <span className="text-sm font-medium text-gray-700">{m.name}</span>
-                  {m.studentId && <span className="text-[10px] text-gray-400 uppercase tracking-wider">ID: {m.studentId}</span>}
+                <div className="flex flex-col min-w-0">
+                  <span className="text-xs font-semibold text-gray-700 truncate">{m.name}</span>
+                  {m.studentId && <span className="text-[9px] text-gray-400 uppercase tracking-wider">ID: {m.studentId}</span>}
                 </div>
                 {isAdmin && onRemove && (
                   <button 
                     onClick={() => onRemove(m.id)}
-                    className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                    className="text-gray-300 hover:text-red-500 transition-colors p-1 flex-shrink-0"
                     title="Remove Student"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={14} />
                   </button>
                 )}
               </li>
             ))}
           </ul>
         )}
+      </div>
+      <div className="p-3 bg-gray-50/50 border-t text-center">
+        <a 
+          href={WHATSAPP_LINKS[groupId]} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-[10px] font-bold text-green-600 hover:text-green-700 flex items-center justify-center gap-1"
+        >
+          <ExternalLink size={10} /> Group WhatsApp
+        </a>
+      </div>
+    </div>
+  );
+};
+
+const SuccessModal: React.FC<{ groupId: number; name: string; onClose: () => void }> = ({ groupId, name, onClose }) => {
+  return (
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md z-[100] flex items-center justify-center p-4">
+      <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center animate-in zoom-in-90 duration-300 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-emerald-500"></div>
+        <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+          <X size={20} />
+        </button>
+        
+        <div className="bg-green-100 text-green-600 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6">
+          <CheckCircle2 size={32} />
+        </div>
+        
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">You're In!</h2>
+        <p className="text-gray-600 mb-6">
+          Hi <span className="font-bold text-indigo-600">{name}</span>, you have been assigned to <span className="font-bold text-indigo-600">Group {groupId}</span>.
+        </p>
+        
+        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl p-4 mb-8">
+          <p className="text-xs text-indigo-700 font-medium mb-3 uppercase tracking-widest">Next Step:</p>
+          <a 
+            href={WHATSAPP_LINKS[groupId]} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="w-full py-4 px-6 bg-[#25D366] hover:bg-[#128C7E] text-white rounded-xl font-bold flex items-center justify-center gap-3 shadow-lg transition-all transform active:scale-95"
+          >
+            Join WhatsApp Group
+            <ExternalLink size={18} />
+          </a>
+        </div>
+        
+        <button 
+          onClick={onClose}
+          className="text-gray-400 text-sm font-medium hover:text-gray-600"
+        >
+          Close and view list
+        </button>
       </div>
     </div>
   );
@@ -74,6 +126,9 @@ const App: React.FC = () => {
   const [passcode, setPasscode] = useState('');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [successAssignment, setSuccessAssignment] = useState<{ groupId: number; name: string } | null>(null);
+
+  const MAX_TOTAL_STUDENTS = 50;
 
   // Load data on mount
   useEffect(() => {
@@ -100,16 +155,20 @@ const App: React.FC = () => {
     e.preventDefault();
     if (isProcessing) return;
     if (!name.trim()) {
-      showToast("Please enter your full name", "error");
+      showToast("Full name is required", "error");
+      return;
+    }
+
+    if (students.length >= MAX_TOTAL_STUDENTS) {
+      showToast("Registration is closed. All 50 spots are taken.", "error");
       return;
     }
 
     setIsProcessing(true);
 
-    // Artificial delay for "processing" feel
-    await new Promise(r => setTimeout(r, 600));
+    // Simulated delay
+    await new Promise(r => setTimeout(r, 800));
 
-    // Check for duplicate
     const uniqueKey = studentId.trim() ? studentId.trim() : name.trim().toLowerCase();
     const existing = students.find(s => 
       (s.studentId && s.studentId === studentId.trim()) || 
@@ -117,18 +176,17 @@ const App: React.FC = () => {
     );
 
     if (existing) {
-      showToast(`${name}, you are already assigned to Group ${existing.groupId}`, "info");
+      setSuccessAssignment({ groupId: existing.groupId, name: existing.name });
       setIsProcessing(false);
       return;
     }
 
-    // Logic for assignment
     const availableGroups = TARGET_GROUPS.filter(gId => 
       students.filter(s => s.groupId === gId).length < GROUP_MAX_SIZE
     );
 
     if (availableGroups.length === 0) {
-      showToast("All groups are full.", "error");
+      showToast("All groups are currently full.", "error");
       setIsProcessing(false);
       return;
     }
@@ -144,7 +202,7 @@ const App: React.FC = () => {
     };
 
     setStudents(prev => [...prev, newStudent]);
-    showToast(`Successfully assigned to Group ${randomGroup}!`, "success");
+    setSuccessAssignment({ groupId: randomGroup, name: name.trim() });
     setName('');
     setStudentId('');
     setIsProcessing(false);
@@ -156,16 +214,16 @@ const App: React.FC = () => {
       setIsAdmin(true);
       setShowAdminLogin(false);
       setPasscode('');
-      showToast("Welcome, Admin", "success");
+      showToast("Admin access granted", "success");
     } else {
-      showToast("Incorrect passcode", "error");
+      showToast("Invalid passcode", "error");
     }
   };
 
   const handleReset = () => {
-    if (confirm("Are you sure you want to reset ALL groups? This cannot be undone.")) {
+    if (confirm("Reset ALL data? This will clear all 50 spots.")) {
       setStudents([]);
-      showToast("All data cleared", "success");
+      showToast("System Reset Successful", "success");
     }
   };
 
@@ -174,27 +232,17 @@ const App: React.FC = () => {
       showToast("No data to export", "error");
       return;
     }
-
     const headers = ["Name", "Student ID", "Group", "Assigned At"];
     const rows = students
       .sort((a, b) => a.groupId - b.groupId || a.assignedAt - b.assignedAt)
-      .map(s => [
-        s.name, 
-        s.studentId || "N/A", 
-        `Group ${s.groupId}`, 
-        new Date(s.assignedAt).toLocaleString()
-      ]);
-
+      .map(s => [s.name, s.studentId || "N/A", `Group ${s.groupId}`, new Date(s.assignedAt).toLocaleString()]);
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
-    link.setAttribute("href", url);
-    link.setAttribute("download", `group_assignment_${new Date().toLocaleDateString()}.csv`);
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
+    link.href = url;
+    link.download = `group_registrations_${new Date().toLocaleDateString()}.csv`;
     link.click();
-    document.body.removeChild(link);
   };
 
   const removeStudent = (id: string) => {
@@ -203,144 +251,131 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pb-20">
-      {/* Header */}
-      <header className="bg-white border-b sticky top-0 z-30 shadow-sm">
-        <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-indigo-600 p-2 rounded-lg text-white">
-              <Users size={24} />
+    <div className="min-h-screen pb-20 bg-[#f9fafb]">
+      {/* Navbar */}
+      <header className="bg-white border-b sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-600 p-2 rounded-xl text-white shadow-lg shadow-indigo-100">
+              <Users size={22} />
             </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-purple-600 hidden sm:block">
-              Group Generator
-            </h1>
+            <h1 className="text-lg font-black tracking-tight text-gray-900">STUDY <span className="text-indigo-600">SYNC</span></h1>
           </div>
-
-          <div className="flex gap-2">
-            {!isAdmin ? (
-              <button 
-                onClick={() => setShowAdminLogin(true)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-indigo-600 transition-colors"
-              >
-                <Settings size={18} />
-                <span>Admin</span>
-              </button>
-            ) : (
-              <button 
-                onClick={() => setIsAdmin(false)}
-                className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-              >
-                <LogOut size={18} />
-                <span>Exit Admin</span>
-              </button>
-            )}
-          </div>
+          <button 
+            onClick={() => isAdmin ? setIsAdmin(false) : setShowAdminLogin(true)}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all ${
+              isAdmin ? 'text-red-500 bg-red-50' : 'text-gray-500 hover:bg-gray-100'
+            }`}
+          >
+            {isAdmin ? <LogOut size={18} /> : <Settings size={18} />}
+            <span className="hidden sm:inline">{isAdmin ? 'Logout' : 'Admin'}</span>
+          </button>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto px-4 mt-8">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-10">
         
-        {/* Intro Section */}
-        <section className="text-center mb-10">
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-2">Join a Group</h2>
-          <p className="text-gray-500 max-w-lg mx-auto">
-            Group 1 is already settled. Please enter your details below to be randomly assigned to Group 2, 3, 4, or 5.
+        {/* Banner */}
+        <div className="text-center mb-12">
+          <h2 className="text-4xl sm:text-5xl font-black text-gray-900 mb-4 tracking-tight">
+            Group <span className="text-indigo-600 underline decoration-indigo-200 underline-offset-8">Assignment</span>
+          </h2>
+          <p className="text-gray-500 max-w-xl mx-auto text-base sm:text-lg">
+            Registration is open for Groups 2 to 5. Once assigned, join your group's WhatsApp to start collaborating!
           </p>
-          <div className="mt-4 inline-flex items-center gap-2 bg-yellow-50 border border-yellow-200 text-yellow-800 text-xs px-3 py-1.5 rounded-full">
-            <AlertCircle size={14} />
-            <span>5 slots available per group. First come, first served!</span>
+          <div className="mt-6 inline-flex flex-wrap justify-center gap-3">
+            <span className="px-4 py-1.5 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full border border-indigo-100 uppercase tracking-widest">
+              Total Capacity: 50
+            </span>
+            <span className="px-4 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100 uppercase tracking-widest">
+              Groups 2, 3, 4, 5 Only
+            </span>
           </div>
-        </section>
+        </div>
 
-        {/* Student Flow Card */}
+        {/* Student Form */}
         {!isAdmin && (
-          <section className="max-w-md mx-auto mb-12">
-            <div className="bg-white p-6 rounded-2xl shadow-xl border border-indigo-50">
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Full Name *</label>
+          <section className="max-w-xl mx-auto mb-16 relative">
+            <div className="bg-white p-8 sm:p-10 rounded-[2.5rem] shadow-2xl border border-gray-100 relative z-10">
+              <form onSubmit={handleRegister} className="space-y-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Full Name</label>
                   <input
                     type="text"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    placeholder="Enter your name"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    placeholder="E.g. John Doe"
+                    className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all text-gray-800 font-medium"
                   />
                 </div>
-                <div>
-                  <label className="block text-sm font-semibold text-gray-700 mb-1">Student ID / Index (Optional)</label>
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">Student ID (Recommended)</label>
                   <input
                     type="text"
                     value={studentId}
                     onChange={(e) => setStudentId(e.target.value)}
-                    placeholder="E.g. 2024001"
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all"
+                    placeholder="Enter your ID number"
+                    className="w-full px-5 py-4 rounded-2xl border border-gray-200 focus:ring-4 focus:ring-indigo-50 focus:border-indigo-500 transition-all text-gray-800 font-medium"
                   />
                 </div>
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className={`w-full py-4 px-6 rounded-xl font-bold text-white shadow-lg transition-all transform active:scale-95 flex items-center justify-center gap-2 ${
-                    isProcessing ? 'bg-indigo-400 cursor-not-allowed' : 'bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700'
+                  className={`w-full py-5 px-8 rounded-2xl font-black text-lg text-white shadow-xl transition-all transform active:scale-[0.98] flex items-center justify-center gap-3 ${
+                    isProcessing ? 'bg-indigo-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-100'
                   }`}
                 >
                   {isProcessing ? (
-                    <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <div className="w-6 h-6 border-4 border-white/30 border-t-white rounded-full animate-spin"></div>
                   ) : (
                     <>
-                      <UserPlus size={20} />
-                      <span>Assign Me to a Group</span>
+                      <UserPlus size={22} />
+                      <span>Assign My Group</span>
                     </>
                   )}
                 </button>
               </form>
-              <p className="text-[11px] text-gray-400 text-center mt-4">
-                Assignments are final. Refreshing the page will keep your group.
-              </p>
             </div>
+            {/* Background decorative elements */}
+            <div className="absolute -top-6 -right-6 w-32 h-32 bg-indigo-50 rounded-full blur-3xl -z-0"></div>
+            <div className="absolute -bottom-6 -left-6 w-32 h-32 bg-purple-50 rounded-full blur-3xl -z-0"></div>
           </section>
         )}
 
-        {/* Admin Tools Panel */}
+        {/* Admin Dashboard */}
         {isAdmin && (
-          <section className="bg-white rounded-2xl border border-red-100 shadow-lg p-6 mb-12 animate-in fade-in slide-in-from-top-4 duration-500">
-            <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-6">
-              <div className="text-center sm:text-left">
-                <h2 className="text-xl font-bold text-red-600 flex items-center gap-2 justify-center sm:justify-start">
-                  <Settings size={20} /> Admin Dashboard
-                </h2>
-                <p className="text-sm text-gray-500">Manage group registrations and exports</p>
+          <section className="bg-white rounded-[2rem] border border-gray-200 shadow-xl p-8 mb-16 animate-in slide-in-from-top-4 duration-500">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
+              <div>
+                <h2 className="text-2xl font-black text-gray-900">Admin Control</h2>
+                <p className="text-gray-500 text-sm">Managing {students.length} of 50 students</p>
               </div>
-              <div className="flex gap-2 w-full sm:w-auto">
-                <button 
-                  onClick={handleExportCSV}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors font-medium border border-indigo-200"
-                >
-                  <Download size={18} /> Export CSV
+              <div className="flex gap-3 w-full md:w-auto">
+                <button onClick={handleExportCSV} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-white border-2 border-indigo-600 text-indigo-600 rounded-xl hover:bg-indigo-50 transition-all font-bold">
+                  <Download size={20} /> Export CSV
                 </button>
-                <button 
-                  onClick={handleReset}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition-colors font-medium border border-red-200"
-                >
-                  <Trash2 size={18} /> Reset All
+                <button onClick={handleReset} className="flex-1 md:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all font-bold shadow-lg shadow-red-100">
+                  <Trash2 size={20} /> Reset All
                 </button>
               </div>
-            </div>
-            <div className="bg-gray-50 rounded-xl p-4 text-xs text-gray-500">
-              <p><strong>Note:</strong> Data is currently stored in <strong>LocalStorage</strong>. This works per device. For shared usage across multiple phones, a backend (Firebase/Supabase) would be required.</p>
             </div>
           </section>
         )}
 
-        {/* Group Displays */}
+        {/* Groups Grid */}
         <section>
-          <div className="flex items-center gap-3 mb-6">
-            <ClipboardList className="text-indigo-600" />
-            <h2 className="text-2xl font-bold text-gray-800">Current Assignments</h2>
+          <div className="flex items-center justify-between mb-8">
+            <div className="flex items-center gap-3">
+              <ClipboardList className="text-indigo-600" size={24} />
+              <h2 className="text-2xl font-black text-gray-900 tracking-tight">Group Progress</h2>
+            </div>
+            <div className="text-xs font-bold text-gray-400 uppercase tracking-widest">
+              Groups 2–5
+            </div>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
             {TARGET_GROUPS.map((gId) => (
               <GroupCard
                 key={gId}
@@ -353,32 +388,35 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* Total Summary */}
-        <section className="mt-12 py-8 border-t border-gray-100 text-center">
-          <div className="inline-flex items-center gap-6 text-gray-500 text-sm">
-            <div className="flex flex-col">
-              <span className="text-2xl font-bold text-indigo-600">{students.length}</span>
-              <span>Total Students</span>
+        {/* Footer Summary */}
+        <section className="mt-20 py-10 border-t border-gray-100">
+          <div className="flex flex-col items-center gap-4">
+            <div className="flex items-center gap-8">
+              <div className="text-center">
+                <div className="text-3xl font-black text-indigo-600">{students.length}</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Signed Up</div>
+              </div>
+              <div className="w-px h-10 bg-gray-200"></div>
+              <div className="text-center">
+                <div className="text-3xl font-black text-gray-300">{MAX_TOTAL_STUDENTS - students.length}</div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Spots Left</div>
+              </div>
             </div>
-            <div className="w-px h-8 bg-gray-200"></div>
-            <div className="flex flex-col">
-              <span className="text-2xl font-bold text-indigo-600">{20 - students.length}</span>
-              <span>Slots Remaining</span>
-            </div>
+            <p className="text-[10px] text-gray-400 font-medium">© 2025 Study Sync • Built for Student Collaboration</p>
           </div>
         </section>
       </main>
 
-      {/* Admin Login Modal */}
+      {/* Modals */}
       {showAdminLogin && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-8 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 animate-in zoom-in-95 duration-200">
             <div className="text-center mb-6">
-              <div className="bg-indigo-100 text-indigo-600 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="bg-indigo-50 text-indigo-600 w-12 h-12 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Settings size={24} />
               </div>
-              <h3 className="text-xl font-bold text-gray-800">Admin Login</h3>
-              <p className="text-gray-500 text-sm">Enter the passcode to access tools</p>
+              <h3 className="text-xl font-black text-gray-900">Admin Login</h3>
+              <p className="text-gray-500 text-sm">Enter the secure passcode</p>
             </div>
             <form onSubmit={handleAdminLogin} className="space-y-4">
               <input
@@ -386,31 +424,26 @@ const App: React.FC = () => {
                 autoFocus
                 value={passcode}
                 onChange={(e) => setPasscode(e.target.value)}
-                placeholder="Passcode"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-lg tracking-widest focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                placeholder="••••"
+                className="w-full px-4 py-4 rounded-2xl border-2 border-gray-100 text-center text-2xl tracking-[1em] focus:outline-none focus:border-indigo-500 transition-all"
               />
               <div className="flex gap-3">
-                <button
-                  type="button"
-                  onClick={() => setShowAdminLogin(false)}
-                  className="flex-1 py-3 px-4 rounded-xl border border-gray-200 font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 py-3 px-4 rounded-xl bg-indigo-600 text-white font-bold hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-colors"
-                >
-                  Verify
-                </button>
+                <button type="button" onClick={() => setShowAdminLogin(false)} className="flex-1 py-4 rounded-2xl font-bold text-gray-400 hover:bg-gray-50">Cancel</button>
+                <button type="submit" className="flex-1 py-4 rounded-2xl bg-indigo-600 text-white font-bold shadow-lg shadow-indigo-100">Verify</button>
               </div>
             </form>
-            <p className="text-[10px] text-gray-400 text-center mt-6">Hint: Try 1234</p>
           </div>
         </div>
       )}
 
-      {/* Toast Notification */}
+      {successAssignment && (
+        <SuccessModal 
+          groupId={successAssignment.groupId} 
+          name={successAssignment.name} 
+          onClose={() => setSuccessAssignment(null)} 
+        />
+      )}
+
       {toast && (
         <Toast 
           message={toast.message} 
